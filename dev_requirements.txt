@@ -1,0 +1,16 @@
+numpy==1.19.2
+scipy==1.6.0
+scikit-learn==0.24.1
+mlxtend==0.18.0
+mne==0.22.0
+matplotlib==3.3.4
+tqdm==4.56.2
+tensorflow==2.4.0
+Pillow==8.1.0
+antropy==0.1.4
+pandas==1.2.2
+seaborn==0.11.1
+pandas==1.2.2
+pytest==6.2.4
+pylint==2.9.3
+pydot==1.4.2
