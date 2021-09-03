@@ -7,11 +7,11 @@ This file contain models implemented for the project
 # -----------------------------------------------------------------------------
 #                           Libraries Needed
 # -----------------------------------------------------------------------------
-import numpy as np
-import config
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+
+from helpers_and_functions import config
 
 
 class simple_cnn():
@@ -44,9 +44,45 @@ class simple_cnn():
     def compile(self):
         self.model.compile(optimizer=keras.optimizers.Adam(self.parameters['lr']),
                            loss=keras.losses.BinaryCrossentropy(from_logits=True),
-                           metrics=config.metrics)
+                           metrics=keras.metrics.BinaryAccuracy(name='accuracy'))
 
+class simple_cnn_2():
+    def __init__(self, param):
+        # Initializing model
+        self.model = None
+        self.feature_extractor = None
+        # parameter
+        self.parameters = param
+        # # Building model structure
+        # self.structure()
+        # # Compiling model
+        # self.compile()
 
+    def build_model_structure(self, in_shape):
+        # Adds batch size = 1
+        in_shape = (1,) + in_shape
+        flat_size = 10
+        num_filters = 5
+        kernel_size = 3
+        out_size = 1
+
+        self.model = tf.keras.Sequential([
+            layers.Conv2D(num_filters, kernel_size, padding='same', activation='relu',
+                          kernel_initializer='he_normal', input_shape=in_shape),
+            layers.Flatten(),
+            layers.Dense(flat_size, activation='relu', name='feature_extraction'),
+            layers.Dense(out_size)
+        ])
+
+        self.feature_extractor = keras.Model(
+            inputs=self.model.inputs,
+            outputs=self.model.get_layer(name="feature_extraction").output,
+        )
+
+    def compile(self):
+        self.model.compile(optimizer=keras.optimizers.Adam(self.parameters['lr']),
+                           loss=keras.losses.BinaryCrossentropy(from_logits=True),
+                           metrics=keras.metrics.BinaryAccuracy(name='accuracy'))
 # -----------------------------------------------------------------------------
 #                           Multi-Branch Model
 # -----------------------------------------------------------------------------

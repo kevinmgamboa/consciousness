@@ -5,8 +5,6 @@ Load and prepare the dataset. In the future this will aso creates different data
 Created on Tue Mar  2 12:10:27 2021
 @author: Kevin Machado Gamboa
 """
-import os
-import mne
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
@@ -14,8 +12,7 @@ from sklearn.model_selection import train_test_split
 
 from mne.datasets.sleep_physionet.age import fetch_data
 # Personal Libraries
-import config
-import functions_main as mpf
+from helpers_and_functions import config, main_functions as mpf
 
 
 # -----------------------------------------------------------------------------
@@ -82,12 +79,22 @@ class sleep:
             self.info['n_samples'] = len(self.data['epochs'])
 
     def load_epochs_labels(self, t_files: int = 10,
-                           n_test: float = 0.2):
+                           n_test: float = 0.2,
+                           scheme: str = 'bp'):
         """
-        t_files = total files to upload
+
+        @param t_files: number of files to load
+        @param n_test: number of files for testing
+        @param scheme: type of training scheme,
+            bp: between patient
+            ip: inter patient
+        @return:
         """
         if t_files > 31 or t_files <= 4:
             raise AssertionError("Number of files have to be between 5-31")
+
+        # number of files for train
+        n_train = t_files - round(t_files * n_test)
 
         # Initializing container for dataset
         self.data = {'train': {"epochs": [], "labels": []},
@@ -106,14 +113,27 @@ class sleep:
             raw.load_data().filter(1, 49, fir_design='firwin')
             # extracts epochs but stages ['n2', 'n3', 'n4', 'W] with binary=True
             raw = mpf.extract_epochs(raw, chunk_duration=config.EPOCH_LENGTH, dataset='sleep', binary=True)
-            # splits dataset keeping class distribution
-            train_x, test_x, train_y, test_y = train_test_split(raw[0], raw[1], test_size=n_test)
-            # stores training epochs and labels in data container
-            self.data['train']["epochs"].append(train_x)
-            self.data['train']["labels"].append(train_y)
-            # stores test epochs and labels in data container
-            self.data['test']["epochs"].append(test_x)
-            self.data['test']["labels"].append(test_y)
+
+            if scheme == 'bp':
+                # Applies between patient training method
+                if n <= n_train:
+                    # stores training epochs and labels in data container
+                    self.data['train']["epochs"].append(raw[0])
+                    self.data['train']["labels"].append(raw[1])
+                else:
+                    # stores test epochs and labels in data container
+                    self.data['test']["epochs"].append(raw[0])
+                    self.data['test']["labels"].append(raw[1])
+
+            elif scheme == 'ip':
+                # splits dataset keeping class distribution
+                train_x, test_x, train_y, test_y = train_test_split(raw[0], raw[1], test_size=n_test)
+                # stores training epochs and labels in data container
+                self.data['train']["epochs"].append(train_x)
+                self.data['train']["labels"].append(train_y)
+                # stores test epochs and labels in data container
+                self.data['test']["epochs"].append(test_x)
+                self.data['test']["labels"].append(test_y)
 
         # concatenating epochs and labels in one ndarray
         self.data['train']["labels"] = np.concatenate(self.data['train']["labels"])
