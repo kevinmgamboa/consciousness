@@ -61,7 +61,7 @@ os.mkdir('log_savings/sleep_' + date)
 # confusion matrix per fold variable
 cm_per_fold = []
 # number of train epochs
-train_epochs = 50
+train_epochs = 30
 # early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5,
 #                                               verbose=1, restore_best_weights=True)
 kfold = KFold(n_splits=config.NUM_FOLDS, shuffle=True)
@@ -87,12 +87,12 @@ parameters = {'lr': 1e-6,
           'out_size': 1}
 
 p_count = 0  # early stopping counter
-patient = 7  # wait n epochs for error to keep decreasing, is not stop
+patient = 5  # wait n epochs for error to keep decreasing, is not stop
 
 all_folds_best_test_score = 0.0
 for tra, val in kfold.split(sleep.data['train']['epochs'], sleep.data['train']['labels']):
     # Call the hub
-    hub = mh.simple_cnn(param=parameters)
+    hub = mh.simple_cnn_2(param=parameters)
     # build model structure
     hub.build_model_structure(sleep.info['data_shape'])
     # compile model
@@ -114,7 +114,7 @@ for tra, val in kfold.split(sleep.data['train']['epochs'], sleep.data['train']['
     for n_ep in range(train_epochs):
         print('------- train score -------')
         # Train the model
-        train_score = hub.model.fit(sleep.data['train']['epochs'][tra],
+        train_score = hub.model.pdf(sleep.data['train']['epochs'][tra],
                                     sleep.data['train']['labels'][tra],
                                     validation_data=(sleep.data['train']['epochs'][val],
                                                      sleep.data['train']['labels'][val]),
@@ -179,13 +179,14 @@ for tra, val in kfold.split(sleep.data['train']['epochs'], sleep.data['train']['
                                                   sleep.info['class_balance']['test']['value']))
     # Increase fold number
     fn += 1
-
+# remove model per fold
+os.remove('log_savings/sleep_' + date + '/best_fold_model.h5')
 #%%
 # ------------------------------------------------------------------------------------
 #                                    Final Results
 # ------------------------------------------------------------------------------------
 # confusion matrix dataframe across participants
-df = utils.cm_fold_to_df(cm_per_fold)
+df = utils.cm_fold_to_df(cm_per_fold, model_best['test_loss_per_fold'])
 utils.boxplot_evaluation_metrics_from_df(df, x_axes='fold')
 
 # plots train history for the best model
@@ -199,13 +200,22 @@ utils.make_confusion_matrix(cm_per_fold[np.argmax(model_best['score'])], group_n
                             title='Confusion Matrix of Best Model')
 #%%
 # ------------------------------------------------------------------------------------
-#                                    Super Test
+#                                       Savings
 # ------------------------------------------------------------------------------------
-utils.super_test(tf.keras.models.load_model('log_savings/sleep_' + date + '/all_folds_best_model.h5'),
-                 feature_function, dataset='anaesthesia')
-#%%
-# ------------------------------------------------------------------------------------
-#                                    Compares with Benchmark
-# ------------------------------------------------------------------------------------
-# check if current scores overpasses benchmark
-utils.check_benchmark(model_best, database='sleep')
+# import json
+
+df.to_csv('log_savings/sleep_' + date + '/folds.csv')
+np.save('log_savings/sleep_' + date + '/model_best.npy', model_best)
+# with open('log_savings/sleep_' + date + '/best_model.json', 'wb') as file:
+#     file.write(json.dumps(model_best).encode("utf-8"))
+    #json.dump(model_best, file, indent=4)
+
+
+# utils.super_test(tf.keras.models.load_model('log_savings/sleep_' + date + '/all_folds_best_model.h5'),
+#                  feature_function, dataset='anaesthesia')
+# #%%
+# # ------------------------------------------------------------------------------------
+# #                                    Compares with Benchmark
+# # ------------------------------------------------------------------------------------
+# # check if current scores overpasses benchmark
+# utils.check_benchmark(model_best, database='sleep')

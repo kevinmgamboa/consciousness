@@ -60,23 +60,63 @@ class simple_cnn_2():
 
     def build_model_structure(self, in_shape):
         # Adds batch size = 1
+        #in_shape = (1,) + in_shape
+        flat_size = 10
+        num_filters = 5
+        kernel_size = 3
+        out_size = 1
+
+        model = tf.keras.Sequential([
+            layers.Conv2D(num_filters, kernel_size, padding='same', activation='relu',
+                          kernel_initializer='he_normal', input_shape=in_shape),
+            layers.Flatten(),
+            layers.Dense(flat_size, activation='relu', name='feature_extraction'),
+            layers.Dense(out_size, name='output')
+        ])
+
+        self.model = keras.Model(
+            inputs=model.inputs,
+            #outputs=[layer.output for layer in model.layers[-2:]]  # extracts the last two layers of the model
+            outputs=model.get_layer(name="output").output,
+        )
+
+    def compile(self):
+        self.model.compile(optimizer=keras.optimizers.Adam(self.parameters['lr']),
+                           loss=keras.losses.BinaryCrossentropy(from_logits=True),
+                           metrics=keras.metrics.BinaryAccuracy(name='accuracy'))
+
+class simple_cnn_2_1():
+    def __init__(self, param):
+        # Initializing model
+        self.model = None
+        self.feature_extractor = None
+        # parameter
+        self.parameters = param
+        # # Building model structure
+        # self.structure()
+        # # Compiling model
+        # self.compile()
+
+    def build_model_structure(self, in_shape):
+        # Adds batch size = 1
         in_shape = (1,) + in_shape
         flat_size = 10
         num_filters = 5
         kernel_size = 3
         out_size = 1
 
-        self.model = tf.keras.Sequential([
+        model = tf.keras.Sequential([
             layers.Conv2D(num_filters, kernel_size, padding='same', activation='relu',
                           kernel_initializer='he_normal', input_shape=in_shape),
             layers.Flatten(),
             layers.Dense(flat_size, activation='relu', name='feature_extraction'),
-            layers.Dense(out_size)
+            layers.Dense(out_size, name='output')
         ])
 
-        self.feature_extractor = keras.Model(
-            inputs=self.model.inputs,
-            outputs=self.model.get_layer(name="feature_extraction").output,
+        self.model = keras.Model(
+            inputs=model.inputs,
+            outputs=[layer.output for layer in model.layers[-2:]]  # extracts the last two layers of the model
+            #outputs=model.get_layer(name="feature_extraction").output,
         )
 
     def compile(self):
