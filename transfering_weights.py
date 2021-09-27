@@ -49,8 +49,10 @@ predictions = new.model.predict(sleep.data['test']['epochs'])
 def predictions_to_df(predicted, labels, stats: bool = False):
 
     if not stats:
-        df = pd.DataFrame()
-        df = df.append([pd.DataFrame([np.append(labels[n], pred)]) for n, pred in enumerate(tqdm(predicted))], ignore_index=True)
+        df = np.insert(predicted, 0, labels, axis=1)
+        df = pd.DataFrame(df)
+        df.rename(columns={0: 'label'}, inplace=True)
+        #df = df.append([pd.DataFrame([np.append(labels[n], pred)]) for n, pred in enumerate(tqdm(predicted))], ignore_index=True)
 
     if stats:
         df = pd.DataFrame(columns=['mean', 'std', 'var', 'label'])
@@ -63,20 +65,18 @@ def predictions_to_df(predicted, labels, stats: bool = False):
 
 data_stats = predictions_to_df(predictions[0], sleep.data['test']['labels'], stats=True)
 data_f = predictions_to_df(predictions[0], sleep.data['test']['labels'])
-#pd.DataFrame([np.append(0, predictions[0][1])])
 
-# #%%
-#
-# import matplotlib
-# matplotlib.use('Qt5Agg')
-# threedee = plt.figure().gca(projection='3d')
-# threedee.scatter(data_stats['mean'], data_stats['std'], data_stats['var'], c=data_stats['label'], marker='o')
-# threedee.set_xlabel('mean')
-# threedee.set_ylabel('std')
-# threedee.set_zlabel('var')
-#
-# plt.legend()
-# plt.show()
+#%%
+sns.displot(data_f, hue="label")
+sns.displot(data_f, kind="kde", vertical=True)
+plt.show()
+#%%
+for pred in tqdm(predictions[0]):
+    sns.displot(pred, kind='kde')
+plt.show()
+#%%
+sns.scatterplot(data=data_f, x=1, y=10, hue="label", style='label')
+plt.show()
 #%%
 sns.scatterplot(data=data_stats, x="std", y="mean", hue="label", style='label', size ="var")
 plt.show()
