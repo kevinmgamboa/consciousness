@@ -1,6 +1,4 @@
-# MSc_Project_Dissertation
-
-Code developments for the MSc Project and Dissertation
+Consciousness Detection using EEG signals
 
 In this project, the feature extraction will always take place at the end of the data pipeline, in a phase called Data Transformation. This obviously required to have applied some initial-data-processing and having cutting a long EEG waveform into epochs, among other things.
 
